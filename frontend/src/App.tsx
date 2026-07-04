@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import EmployeeProfileCard from './components/EmployeeProfileCard';
 import AttendanceCard from './components/AttendanceCard';
@@ -7,11 +8,73 @@ import EmployeeManagementCard from './components/EmployeeManagementCard';
 import LeaveOverviewCard from './components/LeaveOverviewCard';
 import LeaveApprovalCard from './components/LeaveApprovalCard';
 import PayrollSummaryCard from './components/PayrollSummaryCard';
+import Login from './components/Login';
+import { apiRequest, checkBackendStatus } from './api';
 
 function App() {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const isOnline = await checkBackendStatus();
+      if (isOnline && token && !token.startsWith('mock-')) {
+        const userProfile = await apiRequest('/profile/me');
+        setUser(userProfile);
+      } else if (token && token.startsWith('mock-')) {
+        // Mock profile in offline mode
+        setUser({
+          name: 'Admin User',
+          email: 'admin@example.com',
+          role: 'admin',
+          employee_id: 'ADM001',
+          department: 'HR Operations',
+          designation: 'HR Director'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+      // If token expired/invalid, clear it
+      handleLogout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const handleLoginSuccess = (newToken: string) => {
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8] text-sm font-semibold" style={{ color: '#A0785A' }}>
+        Loading Session...
+      </div>
+    );
+  }
+
+  if (!token) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F5F7]">
-      <Header />
+      <Header onLogout={handleLogout} adminName={user?.name || 'Admin User'} />
 
       {/* Main content - 1440px max, 28px padding, 20px gap */}
       <div className="mx-auto" style={{ maxWidth: 1440, padding: 28 }}>

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import ProfileCard from './components/ProfileCard';
@@ -8,18 +9,81 @@ import LeaveCard from './components/LeaveCard';
 import DocumentsCard from './components/DocumentsCard';
 import PayrollCard from './components/PayrollCard';
 import ActivityFeed from './components/ActivityFeed';
+import Login from './components/Login';
+import { apiRequest, checkBackendStatus } from './api';
 
 function App() {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async () => {
+    try {
+      const isOnline = await checkBackendStatus();
+      if (isOnline && token && !token.startsWith('mock-')) {
+        const userProfile = await apiRequest('/profile/me');
+        setUser(userProfile);
+      } else if (token && token.startsWith('mock-')) {
+        // Offline Fallback User
+        setUser({
+          id: 1,
+          name: 'Sarah Chen',
+          email: 'sarah.chen@hrmspro.com',
+          role: 'employee',
+          employee_id: 'EMP-2021-0487',
+          department: 'Design Team',
+          designation: 'Senior Product Designer',
+          status: 'active'
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch user profile:', err);
+      handleLogout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const handleLoginSuccess = (newToken: string) => {
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F6F2] text-sm font-semibold" style={{ color: '#7BAE7F' }}>
+        Loading Session...
+      </div>
+    );
+  }
+
+  if (!token) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F6F2]">
       <Sidebar />
-      <Header />
+      <Header onLogout={handleLogout} employeeName={user?.name} employeeRole={user?.designation || user?.role} />
 
       <main className="ml-[220px] mt-[72px] p-7">
         {/* Page heading */}
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#2F2A26]">Good morning, Sarah</h1>
+            <h1 className="text-2xl font-bold text-[#2F2A26]">Good morning, {user?.name ? user.name.split(' ')[0] : 'Employee'}</h1>
             <p className="text-sm text-[#6E675F] mt-1">Here's your workday at a glance.</p>
           </div>
           <div className="flex items-center gap-2">

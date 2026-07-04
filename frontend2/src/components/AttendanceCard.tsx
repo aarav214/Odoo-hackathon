@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, LogIn, LogOut, Coffee, History, CheckCircle2 } from 'lucide-react';
+import { apiRequest, checkBackendStatus } from '../api';
 
 function useCountUp(target: number, duration = 1000) {
   const [val, setVal] = useState(0);
@@ -38,7 +39,73 @@ const statusColor = (s: string) => {
 
 export default function AttendanceCard() {
   const progress = useCountUp(85);
-  const [checkedIn, setCheckedIn] = useState(true);
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkedOut, setCheckedOut] = useState(false);
+  const [checkInTimeStr, setCheckInTimeStr] = useState('--:--');
+  const [checkOutTimeStr, setCheckOutTimeStr] = useState('--:--');
+  const [workingHoursStr, setWorkingHoursStr] = useState('0h 00m');
+
+  useEffect(() => {
+    async function loadAttendance() {
+      try {
+        const isOnline = await checkBackendStatus();
+        if (isOnline) {
+          const records: any[] = await apiRequest('/attendance/me');
+          const todayStr = new Date().toISOString().split('T')[0];
+          const todayRecord = records.find(r => r.date === todayStr);
+          if (todayRecord) {
+            if (todayRecord.check_in_time) {
+              setCheckedIn(true);
+              const checkInDate = new Date(todayRecord.check_in_time);
+              setCheckInTimeStr(checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            }
+            if (todayRecord.check_out_time) {
+              setCheckedOut(true);
+              const checkOutDate = new Date(todayRecord.check_out_time);
+              setCheckOutTimeStr(checkOutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              
+              const diffMs = new Date(todayRecord.check_out_time).getTime() - new Date(todayRecord.check_in_time).getTime();
+              const diffHrs = Math.floor(diffMs / 3600000);
+              const diffMins = Math.floor((diffMs % 3600000) / 60000);
+              setWorkingHoursStr(`${diffHrs}h ${diffMins}m`);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load attendance:', e);
+      }
+    }
+    loadAttendance();
+  }, []);
+
+  const handleCheckIn = async () => {
+    try {
+      const isOnline = await checkBackendStatus();
+      if (isOnline) {
+        await apiRequest('/attendance/check-in', {
+          method: 'POST',
+          body: JSON.stringify({ lat: 0, lng: 0 })
+        });
+      }
+      setCheckedIn(true);
+      setCheckInTimeStr(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err: any) {
+      alert(err.message || 'Check-in failed');
+    }
+  };
+
+  const handleCheckOut = async () => {
+    try {
+      const isOnline = await checkBackendStatus();
+      if (isOnline) {
+        await apiRequest('/attendance/check-out', { method: 'POST' });
+      }
+      setCheckedOut(true);
+      setCheckOutTimeStr(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err: any) {
+      alert(err.message || 'Check-out failed');
+    }
+  };
 
   const circumference = 2 * Math.PI * 52;
   const offset = circumference - (progress / 100) * circumference;
@@ -48,10 +115,10 @@ export default function AttendanceCard() {
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="text-lg font-bold text-[#2F2A26]">Today's Attendance</h3>
-          <p className="text-xs text-[#6E675F] mt-0.5">Friday, July 4, 2026</p>
+          <p className="text-xs text-[#6E675F] mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         <span className="flex items-center gap-1.5 text-xs font-medium bg-[#7BAE7F15] text-[#5A9260] px-3 py-1.5 rounded-full">
-          <span className="w-1.5 h-1.5 bg-[#7BAE7F] rounded-full pulse-dot" /> Present
+          <span className="w-1.5 h-1.5 bg-[#7BAE7F] rounded-full pulse-dot" /> {checkedIn ? (checkedOut ? 'Checked Out' : 'Active') : 'Not Checked In'}
         </span>
       </div>
 
@@ -73,7 +140,7 @@ export default function AttendanceCard() {
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-[#2F2A26]">{progress}%</span>
+            <span className="text-2xl font-bold text-[#2F2A26]">{checkedIn ? (checkedOut ? '100%' : '75%') : '0%'}</span>
             <span className="text-[10px] text-[#6E675F]">Day Progress</span>
           </div>
         </div>
@@ -81,10 +148,10 @@ export default function AttendanceCard() {
         {/* Stats */}
         <div className="flex-1 grid grid-cols-2 gap-3">
           {[
-            { icon: Clock, label: 'Working Hours', value: '6h 47m', color: 'text-[#7BAE7F]' },
-            { icon: LogIn, label: 'Check In', value: '09:05 AM', color: 'text-[#A98E74]' },
-            { icon: Coffee, label: 'Current Break', value: '18 min', color: 'text-[#C4AA8E]' },
-            { icon: Clock, label: 'Remaining', value: '1h 13m', color: 'text-[#6E675F]' },
+            { icon: Clock, label: 'Working Hours', value: checkedIn ? workingHoursStr : '--:--', color: 'text-[#7BAE7F]' },
+            { icon: LogIn, label: 'Check In', value: checkedIn ? checkInTimeStr : '--:--', color: 'text-[#A98E74]' },
+            { icon: Coffee, label: 'Current Break', value: checkedIn && !checkedOut ? '18 min' : '--:--', color: 'text-[#C4AA8E]' },
+            { icon: LogOut, label: 'Check Out', value: checkedOut ? checkOutTimeStr : '--:--', color: 'text-[#E07A5F]' },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="bg-[#FAF8F4] rounded-2xl p-3 border border-[#EDE8E0]">
               <div className="flex items-center gap-1.5 mb-1">
@@ -101,7 +168,7 @@ export default function AttendanceCard() {
       <div className="mt-5 pt-5 border-t border-[#EDE8E0]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold text-[#2F2A26]">Weekly Attendance</span>
-          <span className="text-[11px] text-[#6E675F]">5/5 days present</span>
+          <span className="text-[11px] text-[#6E675F]">{checkedIn ? '5/5' : '4/5'} days present</span>
         </div>
         <div className="flex items-center justify-between">
           {weekDays.map(({ day, status, hours }) => (
@@ -119,7 +186,7 @@ export default function AttendanceCard() {
       {/* Buttons */}
       <div className="mt-5 grid grid-cols-3 gap-2">
         <button
-          onClick={() => setCheckedIn(true)}
+          onClick={handleCheckIn}
           disabled={checkedIn}
           className={`flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 rounded-xl btn-scale ${
             checkedIn
@@ -129,8 +196,16 @@ export default function AttendanceCard() {
         >
           <LogIn size={13} /> {checkedIn ? 'Checked In' : 'Check In'}
         </button>
-        <button className="flex items-center justify-center gap-1.5 bg-[#F4EFE7] hover:bg-[#EDE8E0] text-[#2F2A26] text-xs font-medium py-2.5 rounded-xl btn-scale">
-          <LogOut size={13} /> Check Out
+        <button
+          onClick={handleCheckOut}
+          disabled={!checkedIn || checkedOut}
+          className={`flex items-center justify-center gap-1.5 text-xs font-medium py-2.5 rounded-xl btn-scale ${
+            !checkedIn || checkedOut
+              ? 'bg-[#EDE8E0] text-[#A09890] cursor-default'
+              : 'bg-[#F4EFE7] hover:bg-[#EDE8E0] text-[#2F2A26]'
+          }`}
+        >
+          <LogOut size={13} /> {checkedOut ? 'Checked Out' : 'Check Out'}
         </button>
         <button className="flex items-center justify-center gap-1.5 bg-[#F4EFE7] hover:bg-[#EDE8E0] text-[#2F2A26] text-xs font-medium py-2.5 rounded-xl btn-scale">
           <History size={13} /> History

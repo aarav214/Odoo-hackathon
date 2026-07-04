@@ -12,7 +12,13 @@ const today = new Date();
 const dateStr = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 const weekNum = Math.ceil(((today.getTime() - new Date(today.getFullYear(), 0, 1).getTime()) / 86400000 + 1) / 7);
 
-export default function Header() {
+interface HeaderProps {
+  onLogout?: () => void;
+  employeeName?: string;
+  employeeRole?: string;
+}
+
+export default function Header({ onLogout, employeeName = 'Sarah Chen', employeeRole = 'Product Designer' }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
@@ -103,19 +109,28 @@ export default function Header() {
           <Settings size={18} className="text-[#6E675F]" />
         </button>
 
-        {/* Avatar */}
-        <button className="ml-2 flex items-center gap-2 hover:bg-[#F4EFE7] rounded-xl px-2 py-1.5 transition-colors">
-          <img
-            src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop"
-            alt="Employee"
-            className="w-8 h-8 rounded-lg object-cover"
-          />
-          <div className="text-left">
-            <p className="text-xs font-semibold text-[#2F2A26] leading-tight">Sarah Chen</p>
-            <p className="text-[10px] text-[#6E675F]">Product Designer</p>
+        {/* Avatar & Log Out */}
+        <div className="flex items-center gap-3">
+          <div className="ml-2 flex items-center gap-2 rounded-xl px-2 py-1.5">
+            <img
+              src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop"
+              alt="Employee"
+              className="w-8 h-8 rounded-lg object-cover"
+            />
+            <div className="text-left">
+              <p className="text-xs font-semibold text-[#2F2A26] leading-tight">{employeeName}</p>
+              <p className="text-[10px] text-[#6E675F]">{employeeRole}</p>
+            </div>
           </div>
-          <ChevronDown size={12} className="text-[#6E675F]" />
-        </button>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="text-[11px] font-bold px-3 py-2 rounded-xl transition-all border border-[#EDE8E0] hover:bg-[#F2E0D8] text-[#E07A5F] btn-scale"
+            >
+              Log Out
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

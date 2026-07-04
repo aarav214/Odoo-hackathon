@@ -12,6 +12,7 @@ import {
   FileText,
   Pencil,
 } from 'lucide-react';
+import { apiRequest, checkBackendStatus } from '../api';
 
 function useCountUp(target: number, duration = 1000) {
   const [val, setVal] = useState(0);
@@ -32,6 +33,29 @@ function useCountUp(target: number, duration = 1000) {
 
 export default function ProfileCard() {
   const completion = useCountUp(98);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const isOnline = await checkBackendStatus();
+        if (isOnline) {
+          const data = await apiRequest('/profile/me');
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error('Failed to load profile card details:', err);
+      }
+    }
+    loadProfile();
+  }, []);
+
+  const name = profile?.name || 'Sarah Chen';
+  const designation = profile?.designation || 'Senior Product Designer';
+  const employeeId = profile?.employee_id || 'EMP-2021-0487';
+  const department = profile?.department || 'Design Team';
+  const email = profile?.email || 'sarah.chen@hrmspro.com';
+  const status = profile?.status || 'active';
 
   return (
     <div className="bg-white rounded-3xl border border-[#EDE8E0] warm-shadow card-hover overflow-hidden fade-in-up">
@@ -45,7 +69,7 @@ export default function ProfileCard() {
         <div className="relative inline-block">
           <img
             src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&fit=crop"
-            alt="Sarah Chen"
+            alt={name}
             className="w-24 h-24 rounded-2xl object-cover border-4 border-white warm-shadow"
           />
           <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-[#7BAE7F] rounded-full border-2 border-white flex items-center justify-center">
@@ -56,11 +80,11 @@ export default function ProfileCard() {
 
       {/* Name + role */}
       <div className="px-6 pt-3">
-        <h2 className="text-xl font-bold text-[#2F2A26]">Sarah Chen</h2>
-        <p className="text-sm text-[#6E675F] mt-0.5">Senior Product Designer</p>
+        <h2 className="text-xl font-bold text-[#2F2A26]">{name}</h2>
+        <p className="text-sm text-[#6E675F] mt-0.5">{designation}</p>
         <div className="flex items-center gap-2 mt-2">
-          <span className="text-[11px] bg-[#7BAE7F15] text-[#5A9260] px-2.5 py-1 rounded-full font-medium">EMP-2021-0487</span>
-          <span className="text-[11px] bg-[#F4EFE7] text-[#6E675F] px-2.5 py-1 rounded-full font-medium">Design Team</span>
+          <span className="text-[11px] bg-[#7BAE7F15] text-[#5A9260] px-2.5 py-1 rounded-full font-medium">{employeeId}</span>
+          <span className="text-[11px] bg-[#F4EFE7] text-[#6E675F] px-2.5 py-1 rounded-full font-medium">{department}</span>
         </div>
       </div>
 
@@ -71,7 +95,7 @@ export default function ProfileCard() {
           { icon: Calendar, label: 'Joined', value: 'Mar 14, 2021' },
           { icon: Award, label: 'Experience', value: '6.5 years' },
           { icon: Briefcase, label: 'Status', value: 'Full-time' },
-          { icon: Mail, label: 'Email', value: 'sarah.chen@hrmspro.com' },
+          { icon: Mail, label: 'Email', value: email },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#F4EFE7] flex items-center justify-center shrink-0">

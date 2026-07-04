@@ -27,7 +27,12 @@ const searchCategories = [
   { label: 'Attendance', results: ['Today\'s report', 'Weekly summary'] },
 ];
 
-export default function Header() {
+interface HeaderProps {
+  onLogout?: () => void;
+  adminName?: string;
+}
+
+export default function Header({ onLogout, adminName = 'Admin User' }: HeaderProps) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -159,16 +164,27 @@ export default function Header() {
         <MessageSquare size={18} />
       </button>
 
-      {/* Avatar */}
-      <div className="flex items-center gap-2 cursor-pointer">
-        <div className="w-8 h-8 rounded-xl overflow-hidden border-2" style={{ borderColor: '#E8DFD3' }}>
-          <img
-            src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
-            alt="Profile"
-            className="w-full h-full object-cover"
-          />
+      {/* Avatar & Log Out */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl overflow-hidden border-2" style={{ borderColor: '#E8DFD3' }}>
+            <img
+              src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=100"
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <span className="text-[12px] font-semibold" style={{ color: '#2D2419' }}>{adminName}</span>
         </div>
-        <ChevronDown size={13} style={{ color: '#A89A88' }} />
+        {onLogout && (
+          <button
+            onClick={onLogout}
+            className="text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all hover:bg-[#F2E0D8]"
+            style={{ border: '1px solid #E8DFD3', color: '#B5654E' }}
+          >
+            Log Out
+          </button>
+        )}
       </div>
     </header>
   );
