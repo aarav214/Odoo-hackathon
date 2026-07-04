@@ -23,7 +23,7 @@ class DecideLeaveReq(BaseModel):
 @router.post("/")
 def create_leave(req: CreateLeaveReq, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     leave = LeaveRequest(
-        user_id=current_user.id,
+        user_id=current_user.id or 0,
         leave_type=req.leave_type,
         start_date=req.start_date,
         end_date=req.end_date,
@@ -35,11 +35,14 @@ def create_leave(req: CreateLeaveReq, current_user: User = Depends(get_current_u
     return leave
 
 @router.get("/")
-def get_leaves(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+def get_leaves(user_id: Optional[int] = None, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    query = select(LeaveRequest)
     if current_user.role == "admin":
-        return session.exec(select(LeaveRequest)).all()
+        if user_id:
+            query = query.where(LeaveRequest.user_id == user_id)
+        return session.exec(query).all()
     else:
-        return session.exec(select(LeaveRequest).where(LeaveRequest.user_id == current_user.id)).all()
+        return session.exec(query.where(LeaveRequest.user_id == current_user.id)).all()
 
 @router.patch("/{id}/decide")
 def decide_leave(id: int, req: DecideLeaveReq, admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):

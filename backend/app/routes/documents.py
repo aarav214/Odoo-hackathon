@@ -24,8 +24,8 @@ def upload_document(
         shutil.copyfileobj(file.file, buffer)
         
     doc = Document(
-        user_id=current_user.id,
-        filename=file.filename,
+        user_id=current_user.id or 0,
+        filename=file.filename or "",
         filepath=filepath,
         doc_type=doc_type
     )
@@ -41,3 +41,18 @@ def get_documents(user_id: int, current_user: User = Depends(get_current_user), 
         
     docs = session.exec(select(Document).where(Document.user_id == user_id)).all()
     return docs
+
+@router.get("/{doc_id}/download")
+def download_document(doc_id: int, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    doc = session.get(Document, doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+        
+    if current_user.role != "admin" and current_user.id != doc.user_id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+        
+    if not os.path.exists(doc.filepath):
+        raise HTTPException(status_code=404, detail="File missing on disk")
+        
+    from fastapi.responses import FileResponse
+    return FileResponse(doc.filepath, filename=doc.filename)

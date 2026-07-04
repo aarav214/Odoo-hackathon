@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..database import get_session
 from ..models import Payroll, User
@@ -43,7 +43,7 @@ def update_payroll(user_id: int, req: UpdatePayrollReq, admin_user: User = Depen
         payroll.base_salary = req.base_salary
         payroll.allowances_json = req.allowances_json
         payroll.deductions_json = req.deductions_json
-        payroll.updated_at = datetime.utcnow()
+        payroll.updated_at = datetime.now(timezone.utc)
         
     session.add(payroll)
     

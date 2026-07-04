@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from pydantic import BaseModel
+from typing import Optional
 
 from ..database import get_session
 from ..models import CorrectionRequest, Attendance, User
@@ -24,7 +25,7 @@ def create_correction(req: CreateCorrectionReq, current_user: User = Depends(get
         raise HTTPException(status_code=404, detail="Attendance record not found or not yours")
         
     correction = CorrectionRequest(
-        user_id=current_user.id,
+        user_id=current_user.id or 0,
         attendance_id=req.attendance_id,
         requested_change=req.requested_change,
         reason=req.reason
@@ -35,11 +36,14 @@ def create_correction(req: CreateCorrectionReq, current_user: User = Depends(get
     return correction
 
 @router.get("/")
-def get_corrections(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+def get_corrections(user_id: Optional[int] = None, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    query = select(CorrectionRequest)
     if current_user.role == "admin":
-        return session.exec(select(CorrectionRequest)).all()
+        if user_id:
+            query = query.where(CorrectionRequest.user_id == user_id)
+        return session.exec(query).all()
     else:
-        return session.exec(select(CorrectionRequest).where(CorrectionRequest.user_id == current_user.id)).all()
+        return session.exec(query.where(CorrectionRequest.user_id == current_user.id)).all()
 
 @router.patch("/{id}/decide")
 def decide_correction(id: int, req: DecideCorrectionReq, admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):

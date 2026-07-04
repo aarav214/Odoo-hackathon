@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 from datetime import timedelta
@@ -16,8 +17,15 @@ from .routes.corrections import router as corrections_router
 from .routes.leave import router as leave_router
 from .routes.payroll import router as payroll_router
 from .routes.audit import router as audit_router
+from .routes.admin import router as admin_router
 
-app = FastAPI(title="HRMS MVP")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables()
+    yield
+
+app = FastAPI(title="HRMS MVP", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,10 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
 
 app.include_router(auth_router)
 app.include_router(profile_router)
@@ -40,6 +44,7 @@ app.include_router(corrections_router)
 app.include_router(leave_router)
 app.include_router(payroll_router)
 app.include_router(audit_router)
+app.include_router(admin_router)
 
 @app.post("/admin/impersonate/{user_id}", tags=["admin"])
 def impersonate(user_id: int, admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):
@@ -50,7 +55,7 @@ def impersonate(user_id: int, admin_user: User = Depends(require_role("admin")),
         
     write_audit_entry(
         session=session,
-        actor_id=admin_user.id,
+        actor_id=admin_user.id or 0,
         action="impersonation_start",
         target_user_id=user_id,
         payload={"reason": "Admin impersonation"}

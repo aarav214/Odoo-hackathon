@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 from ..database import get_session
 from ..models import Attendance, User
@@ -23,20 +23,20 @@ class OfflineSyncPayload(BaseModel):
 @router.post("/check-in")
 def check_in(payload: LocationPayload, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     today = date.today()
-    att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (Attendance.date == today))).first()
+    att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (col(Attendance.date) == today))).first()
     
     if att:
         if att.check_in_time:
             raise HTTPException(status_code=422, detail="Already checked in today")
-        att.check_in_time = datetime.utcnow()
+        att.check_in_time = datetime.now(timezone.utc)
         att.lat = payload.lat
         att.lng = payload.lng
         att.status = "present"
     else:
         att = Attendance(
-            user_id=current_user.id,
+            user_id=current_user.id or 0,
             date=today,
-            check_in_time=datetime.utcnow(),
+            check_in_time=datetime.now(timezone.utc),
             status="present",
             lat=payload.lat,
             lng=payload.lng
@@ -49,7 +49,7 @@ def check_in(payload: LocationPayload, current_user: User = Depends(get_current_
 @router.post("/check-out")
 def check_out(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     today = date.today()
-    att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (Attendance.date == today))).first()
+    att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (col(Attendance.date) == today))).first()
     
     if not att or not att.check_in_time:
         raise HTTPException(status_code=422, detail="Not checked in today")
@@ -57,7 +57,7 @@ def check_out(current_user: User = Depends(get_current_user), session: Session =
     if att.check_out_time:
         raise HTTPException(status_code=422, detail="Already checked out today")
         
-    att.check_out_time = datetime.utcnow()
+    att.check_out_time = datetime.now(timezone.utc)
     session.add(att)
     session.commit()
     session.refresh(att)
@@ -65,12 +65,15 @@ def check_out(current_user: User = Depends(get_current_user), session: Session =
 
 @router.get("/me")
 def get_my_attendance(range: str = "daily", current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    records = session.exec(select(Attendance).where(Attendance.user_id == current_user.id).order_by(Attendance.date)).all()
+    records = session.exec(select(Attendance).where(Attendance.user_id == current_user.id).order_by(col(Attendance.date))).all()
     return records
 
 @router.get("/all")
-def get_all_attendance(admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):
-    records = session.exec(select(Attendance).order_by(Attendance.date)).all()
+def get_all_attendance(user_id: Optional[int] = None, admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):
+    query = select(Attendance)
+    if user_id:
+        query = query.where(Attendance.user_id == user_id)
+    records = session.exec(query.order_by(col(Attendance.date))).all()
     return records
 
 @router.post("/sync-offline")
@@ -78,11 +81,11 @@ def sync_offline(payloads: List[OfflineSyncPayload], current_user: User = Depend
     processed = []
     for payload in payloads:
         rec_date = payload.timestamp.date()
-        att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (Attendance.date == rec_date))).first()
+        att = session.exec(select(Attendance).where((Attendance.user_id == current_user.id) & (col(Attendance.date) == rec_date))).first()
         
         if not att:
             att = Attendance(
-                user_id=current_user.id,
+                user_id=current_user.id or 0,
                 date=rec_date,
                 status="present",
                 synced_offline=True

@@ -29,6 +29,23 @@ Authenticates a user.
 
 ## Admin (`/admin`)
 
+### `GET /admin/dashboard/summary`
+Fetches a high-level statistical summary for the admin dashboard (total employees, attendance counts, pending leaves/corrections).
+- **Role Required**: `admin`
+
+### `GET /admin/dashboard/activity`
+Fetches a chronological feed of recent company activities (e.g., employee creations, leaves, corrections, payroll updates).
+- **Role Required**: `admin`
+
+### `GET /admin/employees`
+Lists all employees with support for search, filtering, pagination, and sorting.
+- **Role Required**: `admin`
+- **Query Parameters**: `search`, `department`, `designation`, `status`, `skip`, `limit`, `sort_by`
+
+### `GET /admin/employees/{employee_id}/overview`
+Fetches a comprehensive overview for a specific employee, including their profile, attendance summary, leave summary, payroll, and documents.
+- **Role Required**: `admin`
+
 ### `POST /admin/impersonate/{user_id}`
 Allows an Admin to impersonate an employee. Automatically writes to the **Audit Ledger**.
 - **Role Required**: `admin`
@@ -50,9 +67,9 @@ Fetches any user's profile.
 - **Role Required**: `admin`
 
 ### `PATCH /profile/{user_id}`
-Updates any user's profile (including role & employee_id).
+Updates any user's profile (including role, employee_id, and details).
 - **Role Required**: `admin`
-- **Body**: `name`, `email`, `role`, `employee_id` (all optional)
+- **Body**: `name`, `email`, `role`, `employee_id`, `department`, `designation`, `status` (all optional)
 
 ---
 
@@ -65,6 +82,11 @@ Uploads a document for the current user.
 ### `GET /documents/{user_id}`
 Fetches all uploaded documents for a specific user.
 - **Access**: The target `user_id` themselves, or an `admin`.
+
+### `GET /documents/{doc_id}/download`
+Downloads a specific uploaded document.
+- **Access**: The target document's owner, or an `admin`.
+- **Response**: File stream.
 
 ---
 
@@ -97,6 +119,7 @@ Fetches the attendance records for the current user.
 ### `GET /attendance/all`
 Fetches all attendance records across the company.
 - **Role Required**: `admin`
+- **Query Parameters**: `user_id` (optional, to filter records for a specific employee)
 
 ### `POST /attendance/sync-offline`
 Synchronizes an array of offline check-ins/check-outs.
@@ -113,7 +136,8 @@ Submits a correction request for an attendance record.
 
 ### `GET /corrections/`
 Fetches correction requests.
-- **Access**: If `admin`, returns ALL requests. If `employee`, returns only their own.
+- **Access**: If `admin`, returns ALL requests (can be filtered by `user_id` query param). If `employee`, returns only their own.
+- **Query Parameters**: `user_id` (optional, admin only)
 
 ### `PATCH /corrections/{id}/decide`
 Approves or rejects a correction request.
@@ -130,7 +154,8 @@ Submits a new leave request.
 
 ### `GET /leave/`
 Fetches leave requests.
-- **Access**: If `admin`, returns ALL requests. If `employee`, returns only their own.
+- **Access**: If `admin`, returns ALL requests (can be filtered by `user_id` query param). If `employee`, returns only their own.
+- **Query Parameters**: `user_id` (optional, admin only)
 
 ### `PATCH /leave/{id}/decide`
 Approves or rejects a leave request.

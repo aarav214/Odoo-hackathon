@@ -16,6 +16,9 @@ class ProfileUpdate(BaseModel):
 class AdminProfileUpdate(ProfileUpdate):
     role: Optional[str] = None
     employee_id: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    status: Optional[str] = None
 
 @router.get("/me")
 def get_my_profile(current_user: User = Depends(get_current_user)):
@@ -45,7 +48,7 @@ def update_profile(user_id: int, update_data: AdminProfileUpdate, admin_user: Us
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    update_dict = update_data.dict(exclude_unset=True)
+    update_dict = update_data.model_dump(exclude_unset=True)
     for key, value in update_dict.items():
         setattr(user, key, value)
         

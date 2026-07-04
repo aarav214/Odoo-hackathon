@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -9,7 +9,10 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     password_hash: str
     role: str # "admin" | "employee"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    status: str = Field(default="active") # "active" | "inactive" | "on_leave"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Document(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -17,7 +20,7 @@ class Document(SQLModel, table=True):
     filename: str
     filepath: str
     doc_type: str
-    uploaded_at: datetime = Field(default_factory=datetime.utcnow)
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ChecklistItem(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -62,7 +65,7 @@ class Payroll(SQLModel, table=True):
     base_salary: float
     allowances_json: str
     deductions_json: str
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AuditLog(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -72,4 +75,4 @@ class AuditLog(SQLModel, table=True):
     action: str
     target_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     payload_json: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
