@@ -30,9 +30,11 @@ const searchCategories = [
 interface HeaderProps {
   onLogout?: () => void;
   adminName?: string;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export default function Header({ onLogout, adminName = 'Admin User' }: HeaderProps) {
+export default function Header({ onLogout, adminName = 'Admin User', activeTab = 'Dashboard', onTabChange }: HeaderProps) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,20 +62,24 @@ export default function Header({ onLogout, adminName = 'Admin User' }: HeaderPro
 
       {/* Nav */}
       <nav className="flex items-center gap-1">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 ${
-              item.active
-                ? 'text-white shadow-sm'
-                : 'hover:bg-[#F5EDE0]'
-            }`}
-            style={item.active ? { background: '#A0785A', color: 'white' } : { color: '#8A7B6A' }}
-          >
-            <item.icon size={15} strokeWidth={2} />
-            {item.label}
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = item.label === activeTab;
+          return (
+            <button
+              key={item.label}
+              onClick={() => onTabChange && onTabChange(item.label)}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 ${
+                isActive
+                  ? 'text-white shadow-sm'
+                  : 'hover:bg-[#F5EDE0]'
+              }`}
+              style={isActive ? { background: '#A0785A', color: 'white' } : { color: '#8A7B6A' }}
+            >
+              <item.icon size={15} strokeWidth={2} />
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Center spacer */}
