@@ -7,6 +7,7 @@ from ..database import get_session
 from ..models import Payroll, User
 from ..auth import get_current_user, require_role
 from .audit import write_audit_entry
+from .notifications import create_notification
 
 router = APIRouter(prefix="/payroll", tags=["payroll"])
 
@@ -57,4 +58,15 @@ def update_payroll(user_id: int, req: UpdatePayrollReq, admin_user: User = Depen
     
     session.commit()
     session.refresh(payroll)
+    
+    create_notification(
+        session=session,
+        recipient_id=user_id,
+        title="Payroll Updated",
+        message="Your salary details have been modified.",
+        notification_type="payroll",
+        reference_type="payroll",
+        reference_id=payroll.id
+    )
+    
     return payroll

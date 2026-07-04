@@ -3,6 +3,8 @@ import json
 from datetime import datetime
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select, desc
+from pydantic import BaseModel
+from typing import List
 from ..database import get_session
 from ..models import AuditLog, User
 from ..auth import require_role
@@ -42,14 +44,23 @@ def list_logs(admin_user: User = Depends(require_role("admin")), session: Sessio
     logs = session.exec(select(AuditLog).order_by(AuditLog.id)).all()
     return logs
 
-@router.get("/verify")
+class VerifyLedgerResponse(BaseModel):
+    verification_status: bool
+    verified_records: int
+    invalid_records: List[int]
+
+@router.get("/verify", response_model=VerifyLedgerResponse, summary="Verify Immutable Audit Ledger")
 def verify_ledger(admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):
     logs = session.exec(select(AuditLog).order_by(AuditLog.id)).all()
     
     expected_prev_hash = "0" * 64
+    verified_records = 0
+    invalid_records = []
+    
     for log in logs:
+        is_valid = True
         if log.prev_hash != expected_prev_hash:
-            return {"valid": False, "first_broken_id": log.id}
+            is_valid = False
             
         data_to_hash = {
             "prev_hash": log.prev_hash,
@@ -62,8 +73,17 @@ def verify_ledger(admin_user: User = Depends(require_role("admin")), session: Se
         computed_hash = hashlib.sha256(json_str.encode("utf-8")).hexdigest()
         
         if computed_hash != log.hash:
-            return {"valid": False, "first_broken_id": log.id}
+            is_valid = False
+            
+        if is_valid:
+            verified_records += 1
+        else:
+            invalid_records.append(log.id)
             
         expected_prev_hash = log.hash
         
-    return {"valid": True, "first_broken_id": None}
+    return {
+        "verification_status": len(invalid_records) == 0,
+        "verified_records": verified_records,
+        "invalid_records": invalid_records
+    }

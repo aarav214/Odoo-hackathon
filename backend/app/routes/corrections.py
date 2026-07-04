@@ -6,6 +6,7 @@ from typing import Optional
 from ..database import get_session
 from ..models import CorrectionRequest, Attendance, User
 from ..auth import get_current_user, require_role
+from .notifications import create_notification
 
 router = APIRouter(prefix="/corrections", tags=["corrections"])
 
@@ -33,6 +34,17 @@ def create_correction(req: CreateCorrectionReq, current_user: User = Depends(get
     session.add(correction)
     session.commit()
     session.refresh(correction)
+    
+    create_notification(
+        session=session,
+        recipient_id=current_user.id or 0,
+        title="Attendance Correction Submitted",
+        message=f"Your attendance correction for attendance ID {req.attendance_id} has been submitted.",
+        notification_type="attendance",
+        reference_type="correction_request",
+        reference_id=correction.id
+    )
+    
     return correction
 
 @router.get("/")
@@ -66,4 +78,15 @@ def decide_correction(id: int, req: DecideCorrectionReq, admin_user: User = Depe
             
     session.commit()
     session.refresh(correction)
+    
+    create_notification(
+        session=session,
+        recipient_id=correction.user_id,
+        title=f"Attendance Correction {req.status.capitalize()}",
+        message=f"Your attendance correction has been {req.status}.",
+        notification_type="attendance",
+        reference_type="correction_request",
+        reference_id=correction.id
+    )
+    
     return correction

@@ -18,6 +18,9 @@ from .routes.leave import router as leave_router
 from .routes.payroll import router as payroll_router
 from .routes.audit import router as audit_router
 from .routes.admin import router as admin_router
+from .routes.analytics import router as analytics_router
+from .routes.notifications import router as notifications_router
+from .routes.salary import router as salary_router
 
 
 @asynccontextmanager
@@ -45,6 +48,9 @@ app.include_router(leave_router)
 app.include_router(payroll_router)
 app.include_router(audit_router)
 app.include_router(admin_router)
+app.include_router(analytics_router)
+app.include_router(notifications_router)
+app.include_router(salary_router)
 
 @app.post("/admin/impersonate/{user_id}", tags=["admin"])
 def impersonate(user_id: int, admin_user: User = Depends(require_role("admin")), session: Session = Depends(get_session)):

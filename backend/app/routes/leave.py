@@ -7,6 +7,7 @@ from typing import Optional
 from ..database import get_session
 from ..models import LeaveRequest, User
 from ..auth import get_current_user, require_role
+from .notifications import create_notification
 
 router = APIRouter(prefix="/leave", tags=["leave"])
 
@@ -32,6 +33,17 @@ def create_leave(req: CreateLeaveReq, current_user: User = Depends(get_current_u
     session.add(leave)
     session.commit()
     session.refresh(leave)
+    
+    create_notification(
+        session=session,
+        recipient_id=current_user.id or 0,
+        title="Leave Request Submitted",
+        message=f"Your {req.leave_type} leave request from {req.start_date} to {req.end_date} has been submitted.",
+        notification_type="leave",
+        reference_type="leave_request",
+        reference_id=leave.id
+    )
+    
     return leave
 
 @router.get("/")
@@ -58,4 +70,15 @@ def decide_leave(id: int, req: DecideLeaveReq, admin_user: User = Depends(requir
     session.add(leave)
     session.commit()
     session.refresh(leave)
+    
+    create_notification(
+        session=session,
+        recipient_id=leave.user_id,
+        title=f"Leave Request {req.status.capitalize()}",
+        message=f"Your leave request has been {req.status}.",
+        notification_type="leave",
+        reference_type="leave_request",
+        reference_id=leave.id
+    )
+    
     return leave

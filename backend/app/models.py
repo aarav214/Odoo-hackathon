@@ -76,3 +76,14 @@ class AuditLog(SQLModel, table=True):
     target_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     payload_json: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Notification(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    recipient_id: int = Field(foreign_key="user.id")
+    title: str
+    message: str
+    notification_type: str
+    reference_type: Optional[str] = None
+    reference_id: Optional[int] = None
+    is_read: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
