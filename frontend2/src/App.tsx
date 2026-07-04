@@ -141,7 +141,7 @@ function App() {
   return (
     <div className="min-h-screen bg-[#F8F6F2]">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout} />
-      <Header onLogout={handleLogout} employeeName={user?.name} employeeRole={user?.designation || user?.role} />
+      <Header onLogout={handleLogout} employeeName={user?.name} employeeRole={user?.designation || user?.role} onTabChange={setActiveTab} />
 
       <main className="ml-[220px] mt-[72px] p-7">
         {/* Page heading */}

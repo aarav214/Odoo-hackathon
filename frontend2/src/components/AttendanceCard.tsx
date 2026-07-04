@@ -51,13 +51,28 @@ export default function AttendanceCard() {
         const isOnline = await checkBackendStatus();
         if (isOnline) {
           const records: any[] = await apiRequest('/attendance/me');
-          const todayStr = new Date().toISOString().split('T')[0];
-          const todayRecord = records.find(r => r.date === todayStr);
+          const localDate = new Date();
+          const localDateStr = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, '0')}-${String(localDate.getDate()).padStart(2, '0')}`;
+          const utcDateStr = localDate.toISOString().split('T')[0];
+          
+          const todayRecord = records.find(r => {
+            if (!r.date) return false;
+            const recDateOnly = r.date.split('T')[0];
+            return recDateOnly === localDateStr || recDateOnly === utcDateStr;
+          });
+
           if (todayRecord) {
             if (todayRecord.check_in_time) {
               setCheckedIn(true);
               const checkInDate = new Date(todayRecord.check_in_time);
               setCheckInTimeStr(checkInDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+              
+              if (!todayRecord.check_out_time) {
+                const diffMs = new Date().getTime() - checkInDate.getTime();
+                const diffHrs = Math.max(0, Math.floor(diffMs / 3600000));
+                const diffMins = Math.max(0, Math.floor((diffMs % 3600000) / 60000));
+                setWorkingHoursStr(`${diffHrs}h ${diffMins}m`);
+              }
             }
             if (todayRecord.check_out_time) {
               setCheckedOut(true);

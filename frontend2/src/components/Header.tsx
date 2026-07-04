@@ -16,14 +16,27 @@ interface HeaderProps {
   onLogout?: () => void;
   employeeName?: string;
   employeeRole?: string;
+  onTabChange?: (tab: string) => void;
 }
 
-export default function Header({ onLogout, employeeName = 'Sarah Chen', employeeRole = 'Product Designer' }: HeaderProps) {
+export default function Header({ onLogout, employeeName = 'Sarah Chen', employeeRole = 'Product Designer', onTabChange }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Settings mock states
+  const [notifyEnabled, setNotifyEnabled] = useState(true);
+  const [highContrast, setHighContrast] = useState(false);
+  const [timezone, setTimezone] = useState('IST (UTC+05:30)');
 
   const unread = notifications.filter(n => !n.read).length;
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert('Portal preferences saved successfully!');
+    setSettingsOpen(false);
+  };
 
   return (
     <header className="fixed top-0 left-[220px] right-0 h-[72px] bg-white/90 backdrop-blur-md border-b border-[#EDE8E0] flex items-center px-7 z-10 warm-shadow">
@@ -95,17 +108,25 @@ export default function Header({ onLogout, employeeName = 'Sarah Chen', employee
                 ))}
               </div>
               <div className="px-4 py-2.5 border-t border-[#EDE8E0]">
-                <button className="text-xs font-medium text-[#7BAE7F] hover:underline">View all notifications</button>
+                <button onClick={() => onTabChange && onTabChange('Help Center')} className="text-xs font-medium text-[#7BAE7F] hover:underline">View all notifications</button>
               </div>
             </div>
           )}
         </div>
 
-        <button className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[#F4EFE7] transition-colors">
+        <button
+          onClick={() => onTabChange && onTabChange('Help Center')}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[#F4EFE7] transition-colors"
+          title="Messages"
+        >
           <MessageSquare size={18} className="text-[#6E675F]" />
         </button>
 
-        <button className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[#F4EFE7] transition-colors">
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[#F4EFE7] transition-colors"
+          title="Portal Settings"
+        >
           <Settings size={18} className="text-[#6E675F]" />
         </button>
 
@@ -132,6 +153,55 @@ export default function Header({ onLogout, employeeName = 'Sarah Chen', employee
           )}
         </div>
       </div>
+
+      {/* Settings Modal */}
+      {settingsOpen && (
+        <div className="fixed inset-0 bg-[#2d2a2650] backdrop-blur-sm flex items-center justify-center z-[150] p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm border border-[#EDE8E0] shadow-2xl">
+            <h4 className="text-[#2F2A26] font-bold text-base mb-4">Portal Preferences</h4>
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#2F2A26] font-medium">Desktop Notifications</span>
+                <input
+                  type="checkbox"
+                  checked={notifyEnabled}
+                  onChange={e => setNotifyEnabled(e.target.checked)}
+                  className="w-4 h-4 accent-[#7BAE7F] cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#2F2A26] font-medium">Increase Contrast (Theme)</span>
+                <input
+                  type="checkbox"
+                  checked={highContrast}
+                  onChange={e => setHighContrast(e.target.checked)}
+                  className="w-4 h-4 accent-[#7BAE7F] cursor-pointer"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-[#6E675F] block mb-1">Timezone</label>
+                <select
+                  value={timezone}
+                  onChange={e => setTimezone(e.target.value)}
+                  className="w-full p-2 text-xs rounded-xl border border-[#EDE8E0] bg-white outline-none focus:border-[#7BAE7F]"
+                >
+                  <option value="IST (UTC+05:30)">India (IST - UTC+05:30)</option>
+                  <option value="EST (UTC-05:00)">New York (EST - UTC-05:00)</option>
+                  <option value="GMT (UTC+00:00)">London (GMT - UTC+00:00)</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" className="flex-1 bg-[#7BAE7F] text-white text-xs font-semibold py-2.5 rounded-xl hover:bg-[#5A9260]">
+                  Save Changes
+                </button>
+                <button type="button" onClick={() => setSettingsOpen(false)} className="flex-1 bg-[#F4EFE7] text-[#2F2A26] text-xs font-semibold py-2.5 rounded-xl hover:bg-[#EDE8E0]">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
