@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+:root {
+  --ivory: #F8F6F2;
+  --cream: #F4EFE7;
+  --white: #FFFFFF;
+  --sage: #7BAE7F;
+  --sage-light: #A8C9AB;
+  --sage-dark: #5A9260;
+  --coffee: #A98E74;
+  --coffee-light: #C4AA8E;
+  --text-primary: #2F2A26;
+  --text-secondary: #6E675F;
+  --border: #EDE8E0;
+}
+
+body {
+  background-color: var(--ivory);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+::-webkit-scrollbar-thumb {
+  background: #D4C9BB;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--coffee-light);
+}
+
+/* Card hover elevation */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(47, 42, 38, 0.12);
+}
+
+/* Button scale */
+.btn-scale {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.btn-scale:hover {
+  transform: scale(1.02);
+}
+.btn-scale:active {
+  transform: scale(0.98);
+}
+
+/* Smooth fade in */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+/* Counter animation */
+@keyframes countUp {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Chart animation */
+@keyframes drawLine {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+.chart-line {
+  stroke-dasharray: 1000;
+  animation: drawLine 1.2s ease forwards;
+}
+
+/* Notification slide in */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.slide-in {
+  animation: slideIn 0.3s ease forwards;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Progress ring */
+.progress-ring-circle {
+  transition: stroke-dashoffset 1s ease;
+}
+
+/* Dropdown fade */
+.dropdown-fade {
+  animation: fadeInUp 0.2s ease forwards;
+}
+
+/* Warm shadow */
+.warm-shadow {
+  box-shadow: 0 4px 24px rgba(169, 142, 116, 0.12);
+}
+.warm-shadow-lg {
+  box-shadow: 0 8px 40px rgba(169, 142, 116, 0.16);
+}
+
+/* Active nav item */
+.nav-active {
+  background: linear-gradient(135deg, #7BAE7F15, #A98E7415);
+  border-left: 3px solid #7BAE7F;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #7BAE7F, #A98E74);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Attendance dot pulse */
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(123, 174, 127, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(123, 174, 127, 0); }
+}
+.pulse-dot {
+  animation: pulse-green 2s infinite;
+}
+
+/* Stagger children */
+.stagger > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger > *:nth-child(6) { animation-delay: 0.3s; }
