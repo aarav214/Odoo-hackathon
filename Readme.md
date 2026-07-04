@@ -76,23 +76,24 @@ HRMS /
 │   ├── seed.py              # Automatic database seeder
 │   └── database.db          # SQLite Database (generated on startup)
 │
-├── frontend/                # HR & Admin Dashboard Portal
-│   ├── src/
-│   │   ├── components/      # Admin UI components (AttendanceCard, EmployeeManagementCard, etc.)
-│   │   ├── App.tsx          # Main admin dashboard layout
-│   │   ├── index.css        # Cappuccino theme styles
-│   │   └── main.tsx         # Frontend renderer entrypoint
-│   ├── package.json         # Node.js dependencies
-│   └── vite.config.ts       # Vite config
-│
-└── frontend2/               # Employee Portal (Login & Action Portal)
-    ├── src/
-    │   ├── components/      # Employee UI components (LeaveCard, PayrollCard, DocumentsCard, etc.)
-    │   ├── App.tsx          # Main employee portal dashboard layout
-    │   ├── index.css        # Cappuccino theme styles
-    │   └── main.tsx         # Frontend renderer entrypoint
-    ├── package.json         # Node.js dependencies
-    └── vite.config.ts       # Vite config
+├── frontend/
+│   ├── HR/Admin/            # HR & Admin Dashboard Portal
+│   │   ├── src/
+│   │   │   ├── components/  # Admin UI components (AttendanceCard, EmployeeManagementCard, etc.)
+│   │   │   ├── App.tsx      # Main admin dashboard layout
+│   │   │   ├── index.css    # Cappuccino theme styles
+│   │   │   └── main.tsx     # Frontend renderer entrypoint
+│   │   ├── package.json     # Node.js dependencies
+│   │   └── vite.config.ts   # Vite config
+│   │
+│   └── employee/            # Employee Portal (Login & Action Portal)
+│       ├── src/
+│       │   ├── components/  # Employee UI components (LeaveCard, PayrollCard, DocumentsCard, etc.)
+│       │   ├── App.tsx      # Main employee portal dashboard layout
+│       │   ├── index.css    # Cappuccino theme styles
+│       │   └── main.tsx     # Frontend renderer entrypoint
+│       ├── package.json     # Node.js dependencies
+│       └── vite.config.ts   # Vite config
 ```
 
 ---
@@ -126,11 +127,11 @@ Follow these steps to run the HRMS application locally on your machine.
 > [!NOTE]
 > The database will be automatically created and populated with demo accounts on first startup.
 
-## 2. Admin Portal Setup (`frontend`)
+## 2. Admin Portal Setup (`frontend/HR/Admin`)
 
-1.  Navigate into the `frontend` directory:
+1.  Navigate into the `frontend/HR/Admin` directory:
     ```bash
-    cd frontend
+    cd frontend/HR/Admin
     ```
 2.  Install dependencies:
     ```bash
@@ -142,11 +143,11 @@ Follow these steps to run the HRMS application locally on your machine.
     ```
     *   **Admin App Endpoint:** `http://localhost:5173` (or as displayed in your terminal output)
 
-## 3. Employee Portal Setup (`frontend2`)
+## 3. Employee Portal Setup (`frontend/employee`)
 
-1.  Navigate into the `frontend2` directory:
+1.  Navigate into the `frontend/employee` directory:
     ```bash
-    cd frontend2
+    cd frontend/employee
     ```
 2.  Install dependencies:
     ```bash
@@ -157,6 +158,7 @@ Follow these steps to run the HRMS application locally on your machine.
     npm run dev -- --port 5174
     ```
     *   **Employee App Endpoint:** `http://localhost:5174` (running on port 5174 to avoid conflict with the admin portal)
+
 
 ---
 
